@@ -1,0 +1,15 @@
+# --- ROS 2 기본 무시 파일 ---
+build/
+install/
+log/
+
+# --- Python 관련 ---
+__pycache__/
+*.py[cod]
+*.so
+
+# --- VS Code 설정 파일 (나만 쓰는 설정) ---
+.vscode/
+
+# --- 기타 ---
+.DS_Store
