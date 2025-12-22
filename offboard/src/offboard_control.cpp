@@ -63,7 +63,7 @@ private:
 		msg.command = command;
 		msg.target_system = 1;
 		msg.target_component = 1;
-		msg.source_system = 1;
+		msg.source_system = 255;
 		msg.source_component = 1;
 		msg.from_external = true;
 		msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
