@@ -16,19 +16,16 @@ public:
 
 		timer_ = this->create_wall_timer(100ms, [this]() {
 			if (counter_ == 10) {
-				// 1. 오프보드 모드 변경 & 시동 걸기
-				publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
+				//publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
 				publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
 			}
             
-            // 2. 안전장치: 5초(50틱) 뒤에 자동으로 시동 끄기
             if (counter_ == 60) {
                 publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
                 RCLCPP_INFO(this->get_logger(), "Safety Stop: Disarming!");
-                // rclcpp::shutdown(); // 필요하면 주석 해제
+                rclcpp::shutdown();
             }
 
-			// 3. (중요) 0.5초 안에 신호를 계속 안 주면 드론이 멈춤. 계속 보내야 함.
 			publish_offboard_control_mode();
 			publish_trajectory_setpoint();
             counter_++;
@@ -53,7 +50,7 @@ private:
 
 	void publish_trajectory_setpoint() {
 		TrajectorySetpoint msg{};
-		msg.position = {0.0, 0.0, 0.0}; // (x, y, z) - NED 좌표계
+		msg.position = {0.0, 0.0, 0.0}; 
 		msg.yaw = -3.14; 
 		msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
 		trajectory_setpoint_publisher_->publish(msg);
