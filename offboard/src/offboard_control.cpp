@@ -29,8 +29,12 @@ public:
 			"/fmu/out/vehicle_global_position",
 			10,
 			[this](const px4_msgs::msg::VehicleGlobalPosition &msg) {
-				if (std::isfinite(msg.alt) && std::isfinite(msg.alt_ref)) {
-					altitude_m_ = msg.alt - msg.alt_ref;
+				if (std::isfinite(msg.alt)) {
+					if (!home_alt_set_) {
+						home_alt_m_ = msg.alt;
+						home_alt_set_ = true;
+					}
+					altitude_m_ = msg.alt - home_alt_m_;
 					at_target_altitude_ = altitude_m_ >= kTargetAltitudeM - kAltitudeToleranceM;
 					if (at_target_altitude_) {
 						reached_target_altitude_ = true;
@@ -83,6 +87,8 @@ private:
 	float altitude_m_ = 0.0f;
 	bool at_target_altitude_ = false;
 	bool reached_target_altitude_ = false;
+	bool home_alt_set_ = false;
+	float home_alt_m_ = 0.0f;
 
 	static constexpr uint64_t kHoverTicks = 100;  // 10s at 100ms tick
 	static constexpr float kTargetAltitudeM = 10.0f;
@@ -180,6 +186,7 @@ private:
 				RCLCPP_INFO(this->get_logger(), "Taking off to 10m");
 				gimbal_tilt_publisher_->publish(std_msgs::msg::Empty{});
 				reached_target_altitude_ = false;
+				home_alt_set_ = false;
 				phase_ = Phase::takeoff;
 			}
 			break;
