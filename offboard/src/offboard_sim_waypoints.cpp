@@ -76,6 +76,7 @@ private:
 	rclcpp::Subscription<px4_msgs::msg::VehicleLandDetected>::SharedPtr land_detected_subscription_;
 
 	Phase phase_ = Phase::init;
+	uint64_t warmup_ticks_ = 0;
 	bool command_in_flight_ = false;
 	bool command_result_ready_ = false;
 	bool command_accepted_ = false;
@@ -92,6 +93,7 @@ private:
 	size_t current_waypoint_index_ = 0;
 
 	static constexpr float kWaypointToleranceM = 0.5f;
+	static constexpr uint64_t kOffboardWarmupTicks = 10;
 
 	void publish_offboard_control_mode() {
 		OffboardControlMode msg{};
@@ -164,6 +166,10 @@ private:
 	void advance_state_machine() {
 		switch (phase_) {
 		case Phase::init:
+			if (warmup_ticks_ < kOffboardWarmupTicks) {
+				++warmup_ticks_;
+				break;
+			}
 			if (!command_in_flight_) {
 				RCLCPP_INFO(this->get_logger(), "Switching to offboard mode");
 				request_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1.0f, 6.0f);
