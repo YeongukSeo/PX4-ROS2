@@ -2,7 +2,7 @@
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_land_detected.hpp>
-#include <px4_msgs/msg/vehicle_odometry.hpp>
+#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/vehicle_status.hpp>
 #include <px4_msgs/srv/vehicle_command.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -38,12 +38,12 @@ public:
 				landed_ = msg.landed || msg.ground_contact;
 			});
 
-		odometry_subscription_ = this->create_subscription<px4_msgs::msg::VehicleOdometry>(
-			"/fmu/out/vehicle_odometry",
+		local_position_subscription_ = this->create_subscription<px4_msgs::msg::VehicleLocalPosition>(
+			"/fmu/out/vehicle_local_position",
 			qos_profile,
-			[this](const px4_msgs::msg::VehicleOdometry &msg) {
-				if (std::isfinite(msg.position[2])) {
-					altitude_m_ = -msg.position[2];
+			[this](const px4_msgs::msg::VehicleLocalPosition &msg) {
+				if (std::isfinite(msg.z)) {
+					altitude_m_ = -msg.z;
 
 					if (arming_state_ == 2) {
 						RCLCPP_INFO_THROTTLE(
@@ -94,7 +94,7 @@ private:
 	rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr gimbal_tilt_publisher_;
 	rclcpp::Client<px4_msgs::srv::VehicleCommand>::SharedPtr vehicle_command_client_;
 	rclcpp::Subscription<px4_msgs::msg::VehicleLandDetected>::SharedPtr land_detected_subscription_;
-	rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr odometry_subscription_;
+	rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_position_subscription_;
 	rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr vehicle_status_subscription_;
 
 	Phase phase_ = Phase::init;
