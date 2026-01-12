@@ -196,7 +196,7 @@ class YoloProcessorNode(Node):
             # YOLO Tracking
             results = self.model.track(
                 source=frame, classes=[0], verbose=False, persist=True,
-                tracker="custom_botsort.yaml", conf=0.20, iou=0.45, imgsz=640
+                tracker="custom_botsort.yaml", conf=0.60, iou=0.45, imgsz=640
             )
             
             frame = results[0].plot()

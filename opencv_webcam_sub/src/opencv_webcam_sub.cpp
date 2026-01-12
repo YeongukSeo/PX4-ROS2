@@ -1,9 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
-#include <sensor_msgs/msg/image.hpp>
-#include <std_msgs/msg/header.hpp> // Header 사용을 위해 추가
-#include <cv_bridge/cv_bridge.h>
 #include <vector>
 
 using namespace cv;
@@ -14,15 +11,17 @@ class WebcamSubscriber : public rclcpp::Node
 public:
     WebcamSubscriber() : Node("opencv_webcam_sub")
     {
-        // CompressedImage 구독자 생성 (/perception/debug_image/compressed)
+        // [Key Solution] Use SensorDataQoS instead of integer '10'
+        // SensorDataQoS sets reliability to 'Best Effort' automatically.
+        rclcpp::SensorDataQoS qos_profile;
+
         subscriber_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(
-            "/perception/debug_image/compressed", 
-            10,
+            "/image_raw/compressed", 
+            qos_profile, 
             std::bind(&WebcamSubscriber::imageCallback, this, _1));
 
-        // OpenCV 창 생성
         namedWindow("Webcam Subscriber", WINDOW_AUTOSIZE);
-        RCLCPP_INFO(this->get_logger(), "Webcam Subscriber Started.");
+        RCLCPP_INFO(this->get_logger(), "Node initialized. Waiting for image data...");
     }
 
 private:
@@ -30,25 +29,27 @@ private:
 
     void imageCallback(const sensor_msgs::msg::CompressedImage::SharedPtr msg)
     {
+        // Debug log to confirm callback execution
+        // RCLCPP_INFO(this->get_logger(), "Image received. Size: %zu", msg->data.size());
+
         try
         {
-            // CompressedImage 데이터를 OpenCV Mat으로 변환 (imdecode)
             std::vector<uchar> buf(msg->data.begin(), msg->data.end());
             Mat image = imdecode(buf, IMREAD_COLOR);
 
             if (image.empty())
             {
-                RCLCPP_WARN(this->get_logger(), "Received empty image!");
+                RCLCPP_WARN(this->get_logger(), "Decoding failed: Empty image");
                 return;
             }
 
-            // 이미지 표시 (OpenCV GUI)
             imshow("Webcam Subscriber", image);
             
-            // 키 입력 대기 (1ms). ESC(27) 누르면 종료
-            if (waitKey(1) == 27) 
+            // waitKey is essential for OpenCV UI to update
+            int key = waitKey(1);
+            if (key == 27) // ESC key
             {
-                RCLCPP_INFO(this->get_logger(), "ESC pressed. Shutting down...");
+                RCLCPP_INFO(this->get_logger(), "ESC pressed. Exiting...");
                 rclcpp::shutdown();
             }
         }
@@ -64,8 +65,6 @@ int main(int argc, char **argv)
     rclcpp::init(argc, argv);
     auto node = std::make_shared<WebcamSubscriber>();
     rclcpp::spin(node);
-    
-    // 종료 처리
     destroyAllWindows();
     rclcpp::shutdown();
     return 0;
