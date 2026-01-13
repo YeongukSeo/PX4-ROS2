@@ -36,15 +36,9 @@ class YoloProcessorRealNode(Node):
         self.bridge = CvBridge()
         self.track_history = defaultdict(list)
 
-<<<<<<< Updated upstream
-        self.cap = cv2.VideoCapture(1, cv2.CAP_V4L2)
-        if not self.cap.isOpened():
-            self.get_logger().error("Failed to open camera!")
-=======
         # Publishers
         self.debug_image_pub = self.create_publisher(CompressedImage, '/image_raw/compressed', 10)
         self.person_detected_pub = self.create_publisher(Bool, '/perception/person_detected', 10)
->>>>>>> Stashed changes
         
         # Subscriber
         self.id_subscription = self.create_subscription(Int32, '/perception/set_target_id', self.target_id_callback, 10)
